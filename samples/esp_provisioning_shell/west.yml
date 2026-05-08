@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Nested west manifest for bootstrapping a Zephyr workspace from this repository.
+# See README.md in this directory for `west init` / `west update` / `west build`.
+#
+# Zephyr revision pinned to a known-good SHA (bump after you validate a newer tree).
+
+manifest:
+  self:
+    path: esp-provisioning
+
+  remotes:
+    - name: zephyrproject
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject
+      revision: 6821e5392f3c29b1c1dccbec92a443d976400b86
+      import: true

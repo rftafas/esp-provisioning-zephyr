@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Twister / `west build -T sample.esp_provisioning.shell` metadata.
+# The esp-provisioning module path is registered in CMakeLists.txt via
+# ZEPHYR_EXTRA_MODULES (repo root = ../../ from this sample); no duplicate
+# extra_args needed here unless you split the sample outside the module tree.
+
+sample:
+  name: ESP provisioning shell (BLE / SoftAP)
+  description: |
+    Console menu for esp_provisioning — provisioning session, Wi‑Fi connection test,
+    plaintext credential view (Y gate), persist wifi_credentials + reboot.
+
+common:
+  tags:
+    - wifi
+    - bluetooth
+    - esp32
+    - shell
+    - provisioning
+
+tests:
+  sample.esp_provisioning.shell:
+    tags: wifi bluetooth provisioning esp32 shell

@@ -1,0 +1,186 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig ESP_PROVISIONING
+	bool "Espressif Wi-Fi provisioning (protocomm)"
+	default y
+	select MBEDTLS_DECLARE_PRIVATE_IDENTIFIERS if MBEDTLS
+	help
+	  Espressif-style Wi-Fi provisioning compatible with the Espressif
+	  "ESP BLE Provisioning" phone app, using protocomm + sec1 over one
+	  or both transports:
+	  - BLE GATT (peripheral role)
+	  - SoftAP + HTTP (+ captive DNS)
+
+if ESP_PROVISIONING
+
+menu "esp_provisioning options"
+
+comment "Transports (at least one required)"
+
+comment "Logging"
+
+config ESP_PROV_LOG_LEVEL
+	int "esp_provisioning log level (0=off..4=debug)"
+	default 3
+	range 0 4
+	depends on LOG
+	help
+	  Compile-time log level for esp_provisioning log modules (esp_prov_session,
+	  esp_prov_softap, esp_prov_ble, esp_prov_pkt).
+
+config ESP_PROV_USE_BLE
+	bool "Transport: BLE GATT"
+	default y
+	depends on BT && BT_PERIPHERAL && BT_SMP && BT_SETTINGS && BT_GATT_DYNAMIC_DB
+	help
+	  Build the BLE GATT provisioning transport.
+
+config ESP_PROV_USE_SOFTAP
+	bool "Transport: SoftAP + HTTP/DNS"
+	default y
+	depends on NETWORKING && NET_IPV4 && NET_SOCKETS && NET_TCP && NET_UDP
+	depends on NET_DHCPV4_SERVER && WIFI && NET_L2_WIFI_MGMT && NET_INTERFACE_NAME
+	help
+	  Build the SoftAP + HTTP + DNS provisioning transport.
+
+comment "ERROR: enable at least one of ESP_PROV_USE_BLE / ESP_PROV_USE_SOFTAP"
+	depends on !ESP_PROV_USE_BLE && !ESP_PROV_USE_SOFTAP
+
+comment "Common"
+
+config ESP_PROV_POP
+	string "Proof-of-possession (PoP) for sec1"
+	default "abcd1234"
+	help
+	  Proof-of-possession shared with the phone app.
+
+config ESP_PROV_SOFTAP_SSID
+	string "SoftAP SSID"
+	default "PROV_esp"
+	depends on ESP_PROV_USE_SOFTAP
+	help
+	  SSID used when the SoftAP transport is started.
+
+config ESP_PROV_SESSION_TIMEOUT_SEC
+	int "Provisioning session timeout (seconds)"
+	default 30
+	range 0 32767
+	help
+	  Wall-clock limit in whole seconds from the start of esp_prov_run()
+	  until credentials are received.
+
+config ESP_PROV_USER_CANCEL_COOLDOWN_MS
+	int "Delay after session ready before user cancel is honored (ms)"
+	default 0
+	range 0 60000
+	help
+	  Optional debounce gate for user-initiated cancellation.
+
+config ESP_PROV_ROUTINE_STACK_SIZE
+	int "Provisioning routine thread stack size"
+	default 12288
+	range 4096 32768
+	help
+	  Stack for the provisioning routine thread.
+
+comment "BLE transport"
+	depends on ESP_PROV_USE_BLE
+
+config ESP_PROV_BLE_IDLE_AFTER_DISCONNECT_SEC
+	int "BLE: cancel session if committed central stays disconnected (seconds, 0=off)"
+	default 5
+	range 0 3600
+	depends on ESP_PROV_USE_BLE
+
+comment "SoftAP transport"
+	depends on ESP_PROV_USE_SOFTAP
+
+config ESP_PROV_HTTP_CLOSE_AFTER_PROTO_VER
+	bool "HTTP: send Connection: close after /proto-ver"
+	default y
+	depends on ESP_PROV_USE_SOFTAP
+
+config ESP_PROV_HTTP_WORKER_STACK_SIZE
+	int "HTTP worker thread stack size"
+	default 16384
+	range 4096 32768
+	depends on ESP_PROV_USE_SOFTAP
+
+config ESP_PROV_DNS_STACK_SIZE
+	int "DNS server thread stack size"
+	default 6144
+	range 4096 32768
+	depends on ESP_PROV_USE_SOFTAP
+
+menu "SoftAP IPv4"
+	depends on ESP_PROV_USE_SOFTAP
+
+config ESP_PROV_SOFTAP_IPV4_GATEWAY
+	string "SoftAP gateway / AP IPv4 address"
+	default "192.168.4.1"
+
+config ESP_PROV_SOFTAP_IPV4_NETMASK
+	string "SoftAP IPv4 netmask"
+	default "255.255.255.0"
+
+config ESP_PROV_SOFTAP_DHCP_POOL_BASE
+	string "DHCPv4 lease pool base address"
+	default "192.168.4.10"
+
+endmenu
+
+comment "Diagnostics"
+
+choice ESP_PROV_DIAG_LEVEL
+	prompt "Provisioning diagnostics"
+	default ESP_PROV_DIAG_OFF
+	help
+	  Diagnostic content for provisioning. Higher levels include lower.
+
+config ESP_PROV_DIAG_OFF
+	bool "Off"
+
+config ESP_PROV_DIAG_USER
+	bool "Debug milestones"
+
+config ESP_PROV_DIAG_EXTENDED
+	bool "Extended PDU summaries"
+
+config ESP_PROV_DIAG_PACKETS
+	bool "Packet sniffing (may expose credentials)"
+endchoice
+
+config ESP_PROV_DEVELOPER_TRANSPORT
+	bool
+	default y if ESP_PROV_DIAG_PACKETS
+
+config ESP_PROV_SOFTAP_NET_HEX
+	bool
+	default y if ESP_PROV_DIAG_PACKETS
+	depends on ESP_PROV_DEVELOPER_TRANSPORT && ESP_PROV_USE_SOFTAP
+
+config ESP_PROV_PKT_LOG
+	bool
+	default y if ESP_PROV_DIAG_EXTENDED || ESP_PROV_DIAG_PACKETS
+
+config ESP_PROV_CONSOLE_PROBE
+	bool
+	default y if ESP_PROV_DIAG_PACKETS
+
+config ESP_PROV_APP_TRACE
+	bool
+	default y if ESP_PROV_DIAG_PACKETS
+
+if ESP_PROV_APP_TRACE
+
+config ESP_PROV_APP_TRACE_MAX_BYTES
+	int "Max payload bytes to print per hex trace (per direction)"
+	default 256
+	range 32 512
+
+endif # ESP_PROV_APP_TRACE
+
+endmenu
+
+endif # ESP_PROVISIONING
+

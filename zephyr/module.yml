@@ -1,0 +1,7 @@
+name: esp_provisioning
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig
+  depends:
+    - mbedtls
+

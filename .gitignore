@@ -1,0 +1,7 @@
+.west/
+.cursor/
+build/
+scratch/
+
+# Developer-only Kconfig overlay (local). Release baseline is prj.conf.
+debug.conf
