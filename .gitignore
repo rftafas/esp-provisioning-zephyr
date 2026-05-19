@@ -1,7 +1,13 @@
 .west/
 .cursor/
 build/
+build-*/
 scratch/
 
 # Developer-only Kconfig overlay (local). Release baseline is prj.conf.
 debug.conf
+
+# Developer-only per-board overlay for routing console to native USB on
+# esp32s3_devkitc. Not part of the sample's default DT (board DT keeps
+# console on UART0).
+samples/esp_provisioning_shell/boards/esp32s3_devkitc_procpu.overlay

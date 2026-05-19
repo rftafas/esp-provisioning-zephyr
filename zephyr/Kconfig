@@ -69,13 +69,6 @@ config ESP_PROV_SESSION_TIMEOUT_SEC
 	  Wall-clock limit in whole seconds from the start of esp_prov_run()
 	  until credentials are received.
 
-config ESP_PROV_USER_CANCEL_COOLDOWN_MS
-	int "Delay after session ready before user cancel is honored (ms)"
-	default 0
-	range 0 60000
-	help
-	  Optional debounce gate for user-initiated cancellation.
-
 config ESP_PROV_ROUTINE_STACK_SIZE
 	int "Provisioning routine thread stack size"
 	default 12288

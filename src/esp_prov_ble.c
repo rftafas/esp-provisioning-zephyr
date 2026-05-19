@@ -511,7 +511,7 @@ static void ble_idle_after_disc_work_fn(struct k_work *work)
 	}
 	LOG_WRN("BLE provisioning peer disconnected -- ending session (no reconnect within %u s)",
 		(unsigned int)CONFIG_ESP_PROV_BLE_IDLE_AFTER_DISCONNECT_SEC);
-	esp_prov_cancel();
+	esp_prov_cancel_system();
 }
 
 static int ble_adv_start_internal(void)

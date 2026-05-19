@@ -9,7 +9,7 @@ sample:
   name: ESP provisioning shell (BLE / SoftAP)
   description: |
     Console menu for esp_provisioning — provisioning session, Wi‑Fi connection test,
-    plaintext credential view (Y gate), persist wifi_credentials + reboot.
+    plaintext credential view (Y gate), persist wifi_credentials + reboot, reboot only.
 
 common:
   tags:

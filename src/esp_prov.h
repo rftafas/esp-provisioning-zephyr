@@ -22,13 +22,6 @@
 extern "C" {
 #endif
 
-/**
- * Initialize the Bluetooth controller/host once: bt_enable(), settings_load() for bonds,
- * and ESP32 BLE TX power. Idempotent. Call from application startup before BLE HID
- * advertising and/or esp_prov_run().
- */
-int esp_prov_bt_enable(void);
-
 /** Default PoP for sec1 (Espressif app). */
 #define ESP_PROV_DEFAULT_POP CONFIG_ESP_PROV_POP
 
@@ -56,7 +49,7 @@ struct esp_wifi_credentials {
  * Blocks the calling thread.
  *
  * Internally: the session wall-clock limit is enforced outside the SoftAP HTTP
- * worker (see references/provisioning.md): the caller runs a small join/deadline
+ * worker (see references/component.md): the caller runs a small join/deadline
  * loop while protocomm runs on a dedicated prov-routine thread.
  *
  * Session start/end lines use the Zephyr log module **esp_prov_session** (same as
@@ -80,19 +73,6 @@ void esp_prov_cancel(void);
  * Do not call esp_prov_cancel() from ISR -- use this.
  */
 void esp_prov_cancel_isr(void);
-
-/**
- * True when user-initiated cancel (short press, GPIO IRQ) should call
- * esp_prov_cancel() / esp_prov_cancel_isr().
- *
- * Returns false until the provisioning routine has finished SoftAP/HTTP/DNS/BLE
- * bring-up ("session ready"); this blocks spurious cancel during that window.
- * After session ready: if CONFIG_ESP_PROV_USER_CANCEL_COOLDOWN_MS is 0, returns true;
- * if non-zero, returns false until that many milliseconds have elapsed after ready
- * (optional debounce). Wall-clock session timeout uses esp_prov_cancel() directly
- * and is not gated by this function.
- */
-bool esp_prov_user_cancel_may_run(void);
 
 #ifdef __cplusplus
 }

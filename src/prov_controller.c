@@ -89,7 +89,7 @@ int prov_controller_run_blocking(struct esp_wifi_credentials *out)
 		if (k_uptime_get() >= deadline) {
 			LOG_WRN("Provisioning controller: wall-clock limit reached, requesting cancel");
 			wall_clock_expired = true;
-			esp_prov_cancel();
+			esp_prov_cancel_system();
 			if (k_thread_join(&prov_routine_thread, K_SECONDS(30)) != 0) {
 				LOG_ERR("Provisioning controller: routine thread did not exit after cancel");
 				return ESP_PROV_ERR_INTERNAL;

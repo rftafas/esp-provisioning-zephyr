@@ -271,9 +271,6 @@ static atomic_t s_http_cfd = ATOMIC_INIT(-1);
 K_MUTEX_DEFINE(s_transport_mu);
 static uint8_t s_transport_choice;
 
-/* -1: user cancel gated until session ready + cooldown (only if USER_CANCEL_COOLDOWN_MS > 0). */
-static int64_t s_user_cancel_ok_after_ms = -1;
-
 #if IS_ENABLED(CONFIG_ESP_PROV_USE_SOFTAP)
 
 static atomic_t s_softap_abandoned;
@@ -586,7 +583,7 @@ static int read_http_headers(int fd, char *buf, size_t cap, size_t *out_len)
 					return -ECONNRESET;
 				}
 				/* If SO_RCVTIMEO is ignored and recv returns immediately, avoid starving
-				 * the main thread (button cancel) with a tight loop.
+				 * the main thread with a tight loop.
 				 */
 				k_msleep(1);
 				continue;
@@ -1650,40 +1647,33 @@ static void prov_abort_net_work_fn(struct k_work *work)
 
 K_WORK_DEFINE(prov_abort_net_work, prov_abort_net_work_fn);
 
-void esp_prov_cancel_isr(void)
+static void prov_cancel_apply(bool from_isr)
 {
 	esp_prov_shared_stop_request();
+	if (!from_isr) {
+		/* Thread path: preemptive socket shutdown before work runs (ISR must not
+		 * call zsock_*).
+		 */
+#if IS_ENABLED(CONFIG_ESP_PROV_USE_SOFTAP)
+		prov_shutdown_prov_sockets();
+#endif
+	}
 	(void)k_work_submit(&prov_abort_net_work);
+}
+
+void esp_prov_cancel_system(void)
+{
+	prov_cancel_apply(false);
+}
+
+void esp_prov_cancel_isr(void)
+{
+	prov_cancel_apply(true);
 }
 
 void esp_prov_cancel(void)
 {
-	esp_prov_shared_stop_request();
-	/* Thread path: preemptive socket shutdown before work runs (ISR must use
-	 * esp_prov_cancel_isr() -- no zsock_* there).
-	 */
-#if IS_ENABLED(CONFIG_ESP_PROV_USE_SOFTAP)
-	prov_shutdown_prov_sockets();
-#endif
-	(void)k_work_submit(&prov_abort_net_work);
-}
-
-bool esp_prov_user_cancel_may_run(void)
-{
-	/*
-	 * Until the prov routine marks session ready (SoftAP + HTTP/DNS + BLE path up),
-	 * s_user_cancel_ok_after_ms stays -1 -- must ignore cancel (GPIO IRQ and short press).
-	 * CONFIG_ESP_PROV_USER_CANCEL_COOLDOWN_MS == 0 only removes the *extra* delay after
-	 * that point; it must not skip this gate (otherwise noise during bring-up cancels).
-	 */
-	if (s_user_cancel_ok_after_ms < 0) {
-		return false;
-	}
-#if CONFIG_ESP_PROV_USER_CANCEL_COOLDOWN_MS > 0
-	return k_uptime_get() >= s_user_cancel_ok_after_ms;
-#else
-	return true;
-#endif
+	prov_cancel_apply(false);
 }
 
 int esp_prov_routine_run(struct esp_wifi_credentials *out)
@@ -1704,7 +1694,6 @@ int esp_prov_routine_run(struct esp_wifi_credentials *out)
 	}
 
 	memset(out, 0, sizeof(*out));
-	s_user_cancel_ok_after_ms = -1;
 	esp_prov_shared_setup(out);
 	esp_prov_shared_reset();
 	esp_prov_sec1_reset(esp_prov_sec1_http());
@@ -1875,15 +1864,6 @@ int esp_prov_routine_run(struct esp_wifi_credentials *out)
 	}
 #endif /* CONFIG_ESP_PROV_USE_BLE */
 
-#if CONFIG_ESP_PROV_USER_CANCEL_COOLDOWN_MS > 0
-	s_user_cancel_ok_after_ms =
-		k_uptime_get() + (int64_t)CONFIG_ESP_PROV_USER_CANCEL_COOLDOWN_MS;
-	LOG_INF("Provisioning session ready: user cancel (button/IRQ) allowed after %u ms",
-		(unsigned int)CONFIG_ESP_PROV_USER_CANCEL_COOLDOWN_MS);
-#else
-	s_user_cancel_ok_after_ms = 0;
-#endif
-
 	/* Wall-clock limit is owned by prov_controller (outside this thread). */
 	while (true) {
 		if (esp_prov_shared_wait_done(K_MSEC(200))) {
@@ -1936,7 +1916,6 @@ int esp_prov_routine_run(struct esp_wifi_credentials *out)
 	s_have_cookie = false;
 	esp_prov_shared_reset();
 
-	s_user_cancel_ok_after_ms = -1;
 	return ret;
 
 #if IS_ENABLED(CONFIG_ESP_PROV_USE_SOFTAP)
@@ -1955,7 +1934,6 @@ cleanup_ap:
 	esp_prov_sec1_reset(esp_prov_sec1_ble());
 	s_have_cookie = false;
 	esp_prov_shared_reset();
-	s_user_cancel_ok_after_ms = -1;
 	return ret;
 
 cleanup_prep:
@@ -1964,7 +1942,6 @@ cleanup_early:
 	esp_prov_sec1_reset(esp_prov_sec1_http());
 	esp_prov_sec1_reset(esp_prov_sec1_ble());
 	esp_prov_shared_reset();
-	s_user_cancel_ok_after_ms = -1;
 	return ESP_PROV_ERR_INTERNAL;
 #endif /* CONFIG_ESP_PROV_USE_SOFTAP -- error/cleanup labels */
 }

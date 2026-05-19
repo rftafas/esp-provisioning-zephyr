@@ -1,0 +1,17 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Default overlay for Espressif Wi-Fi boards: enable the Wi-Fi controller.
+ * With CONFIG_ESP32_WIFI_AP_STA_MODE=y the driver adds a second net_if for SoftAP
+ * (see Zephyr samples/net/wifi/apsta_mode); no second devicetree wifi node is required.
+ */
+
+&wifi {
+	status = "okay";
+};
+
+/* Satisfy dtc interrupt_provider when upstream intc omits #address-cells. */
+&intc {
+	#address-cells = <0>;
+	#size-cells = <0>;
+};

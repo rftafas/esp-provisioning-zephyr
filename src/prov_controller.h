@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Provisioning session controller: wall-clock limit and join on a dedicated
- * routine thread (see references/provisioning.md). Not a public API -- only
+ * routine thread (see references/component.md). Not a public API -- only
  * esp_prov_run() calls this.
  */
 
@@ -16,7 +16,7 @@
  * elapses (then cancel + join), or the routine exits on its own.
  *
  * Start/cancel triggers are app policy; this function only enforces the session
- * wall-clock bound and maps expiry to ESP_PROV_ERR_TIMEOUT (distinct from user cancel).
+ * wall-clock bound and maps expiry to ESP_PROV_ERR_TIMEOUT (distinct from esp_prov_cancel*).
  */
 int prov_controller_run_blocking(struct esp_wifi_credentials *out);
 

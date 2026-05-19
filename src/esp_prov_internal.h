@@ -85,6 +85,9 @@ int esp_prov_sec1_apply(esp_prov_sec1_t *ctx, uint8_t *data, size_t len);
 void esp_prov_shared_setup(struct esp_wifi_credentials *out_dest);
 void esp_prov_shared_reset(void);
 
+/** Module-internal cancel (wall-clock timeout, BLE idle disconnect). */
+void esp_prov_cancel_system(void);
+
 /**
  * After SoftAP is enabled (first esp_wifi_start from this app), run one Wi-Fi scan and fill
  * the scan cache -- same role as Rust `wifi_ap::scan_wifi_for_prov` before HTTP/BLE, so BLE
@@ -114,6 +117,7 @@ int esp_prov_shared_dispatch_scan(esp_prov_sec1_t *sec1, uint8_t *work, size_t w
 				  size_t rcap, size_t *rlen);
 
 
+/** Internal: bt_enable(), settings_load, ESP32 TX power; called from esp_prov_run() when BLE is on. */
 int esp_prov_bt_enable(void);
 int esp_prov_ble_start(void);
 void esp_prov_ble_stop(void);
