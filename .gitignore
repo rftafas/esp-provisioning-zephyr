@@ -1,7 +1,11 @@
 .west/
 .cursor/
+
+# Zephyr west build trees (west build -d build, -d build-shell, etc.)
 build/
 build-*/
+samples/esp_provisioning_shell/build/
+
 scratch/
 
 # Developer-only Kconfig overlay (local). Release baseline is prj.conf.

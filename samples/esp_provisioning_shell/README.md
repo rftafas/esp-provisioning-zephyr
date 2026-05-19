@@ -82,6 +82,6 @@ On boot the console prints which transports are compiled in. SoftAP needs a sepa
 
 ## Notes
 
-- Default **`CONFIG_ESP32_WIFI_AP_STA_MODE=y`** matches DualKey and Zephyr `samples/net/wifi/apsta_mode`. If SoftAP SSID/DHCP misbehaves on your Zephyr revision, apply the driver fixes described in product docs (e.g. `esp32_wifi_apsta.md` in consuming apps) before blaming the module.
+- Default **`CONFIG_ESP32_WIFI_AP_STA_MODE=y`** matches Zephyr `samples/net/wifi/apsta_mode`. If SoftAP SSID/DHCP misbehaves on your Zephyr revision, check ESP32 Wi‑Fi driver/APSTA support and [`references/journal.md`](../../references/journal.md) before blaming the module.
 - [`app.overlay`](app.overlay) enables `&wifi` and fixes `&intc` on common Espressif boards; per-board console routing (USB vs UART) can use `boards/<board>.overlay` (see `boards/esp32s3_devkitc_procpu.overlay`).
 - Heap and thread stack sizes in `prj.conf` were tuned on a typical devkit; on smaller SoCs you may need to reduce `CONFIG_HEAP_MEM_POOL_SIZE` or stack options — see [`references/journal.md`](../../references/journal.md).

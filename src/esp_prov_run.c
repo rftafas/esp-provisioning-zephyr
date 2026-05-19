@@ -1732,7 +1732,7 @@ int esp_prov_routine_run(struct esp_wifi_credentials *out)
 	}
 
 #if IS_ENABLED(CONFIG_ESP_PROV_USE_SOFTAP)
-	/* SoftAP bring-up matches samples/net/wifi/apsta_mode (see references/esp32_wifi_apsta.md):
+	/* SoftAP bring-up matches samples/net/wifi/apsta_mode (see references/component.md):
 	 *   1. Configure AP IPv4 + netmask + gw + start DHCPv4 server on s_ap
 	 *   2. NET_REQUEST_WIFI_AP_ENABLE on net_if_get_wifi_sap()
 	 *      -> esp32_wifi_ap_enable() -> esp_wifi_set_mode(APSTA) -> esp_wifi_start()
@@ -1746,7 +1746,7 @@ int esp_prov_routine_run(struct esp_wifi_credentials *out)
 	 *
 	 * ESP32 APSTA on Zephyr requires a local patch to drivers/wifi/esp32/src/esp_wifi_drv.c
 	 * (SAP/STA state, TX iface, AP RX timing).  Re-apply after west update from
-	 * references/patches/esp32-wifi-drv-apsta.patch -- see references/esp32_wifi_apsta.md. */
+	 * references/component.md (SoftAP sequence) and references/journal.md. */
 
 	s_ap = net_if_get_wifi_sap();
 	if (s_ap == NULL) {
